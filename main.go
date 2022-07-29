@@ -1,16 +1,32 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 )
 
 func main() {
-	log.Println("starting server")
-	if err := runServer(":8080"); err != nil {
+	addr, err := getAddr()
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Println("starting server on", addr)
+	if err = runServer(addr); err != nil {
 		log.Println(err)
 	}
+}
+
+func getAddr() (string, error) {
+	if len(os.Args) < 2 {
+		return "", fmt.Errorf("port not specified, running: app.exe 8080")
+	}
+
+	return fmt.Sprintf(":%s", os.Args[1]), nil
 }
 
 // runServer запускает HTTP сервер
