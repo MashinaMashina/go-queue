@@ -21,6 +21,7 @@ func main() {
 	}
 }
 
+// getAddr генерирует адрес для запуска сервера на основе аргументов программы
 func getAddr() (string, error) {
 	if len(os.Args) < 2 {
 		return "", fmt.Errorf("port not specified, running: app.exe 8080")
