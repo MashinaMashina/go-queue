@@ -30,7 +30,8 @@ func (q *Queue) Get() (string, error) {
 	}
 
 	var result string
-	result, q.elements = q.elements[0], q.elements[1:]
+	// берем последний элемент и вырезаем его
+	result, q.elements = q.elements[len(q.elements)-1], q.elements[:len(q.elements)-1]
 
 	return result, nil
 }
