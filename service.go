@@ -3,24 +3,23 @@ package main
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
-var ErrQueueNotExists = errors.New("queue not exists")
-var ErrNotFound = ErrEmpty
+var ErrNotFound = errors.New("queue is empty")
 
 // getQueue отдает элемент из очереди
 // где URL path - имя очереди
-func getQueue(manager *Manager, queueName string) (string, error) {
-	if !manager.Exists(queueName) {
-		return "", ErrQueueNotExists
+func getQueue(manager *Manager, queueName string, d time.Duration) (string, error) {
+	ch := make(chan string)
+	manager.Get(queueName).AddWaiter(d, ch)
+	resp := <-ch
+
+	if resp == "" {
+		return "", fmt.Errorf("getting element: %w", ErrNotFound)
 	}
 
-	element, err := manager.Get(queueName).Get()
-	if err != nil {
-		return "", fmt.Errorf("getting element: %w", err)
-	}
-
-	return element, nil
+	return resp, nil
 }
 
 // putQueue добавляет данные в очередь

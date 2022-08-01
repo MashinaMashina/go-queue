@@ -6,7 +6,7 @@ import (
 
 // Manager - менеджер очередей
 type Manager struct {
-	mu     sync.RWMutex
+	mu     sync.Mutex
 	queues map[string]*Queue
 }
 
@@ -28,13 +28,4 @@ func (m *Manager) Get(name string) *Queue {
 	m.queues[name] = NewQueue()
 
 	return m.queues[name]
-}
-
-// Exists проверяет существование очереди
-func (m *Manager) Exists(name string) bool {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	_, exists := m.queues[name]
-	return exists
 }

@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// testRequest вызывает обработчик HTTP запросов и возвращает результат
 func testRequest(method string, manager *Manager, queue, element string) (int, string, error) {
 	r := httptest.NewRequest(method, "/"+queue+"?v="+element, nil)
 	w := httptest.NewRecorder()
@@ -25,6 +26,7 @@ func testRequest(method string, manager *Manager, queue, element string) (int, s
 	return res.StatusCode, string(data), nil
 }
 
+// testRequestPut вызывает обработчик HTTP запросов для PUT методов
 func testRequestPut(manager *Manager, queue, element string) (int, string, error) {
 	code, resp, err := testRequest(http.MethodPut, manager, queue, element)
 
@@ -35,22 +37,20 @@ func testRequestPut(manager *Manager, queue, element string) (int, string, error
 	return code, resp, err
 }
 
+// testRequestPut вызывает обработчик HTTP запросов для GET методов
 func testRequestGet(manager *Manager, queue string) (int, string, error) {
 	return testRequest(http.MethodGet, manager, queue, "")
 }
 
+// TestHandlerPutEmpty пытается добавить пустое сообщение в очередь
 func TestHandlerPutEmpty(t *testing.T) {
 	queueName := "test-queue"
 	manager := NewManager()
 
-	code, resp, err := testRequestPut(manager, queueName, "")
+	code, _, err := testRequestPut(manager, queueName, "")
 
 	if err != nil {
 		t.Error(err)
-	}
-
-	if resp != "" {
-		t.Errorf("put response not empty")
 	}
 
 	if code != http.StatusBadRequest {
@@ -58,6 +58,7 @@ func TestHandlerPutEmpty(t *testing.T) {
 	}
 }
 
+// TestHandlerPut добавляет сообщение в очередь через HTTP запрос и после проверяет сообщение в очереди
 func TestHandlerPut(t *testing.T) {
 	queueName := "test-queue"
 	element := "test-element"
@@ -77,16 +78,16 @@ func TestHandlerPut(t *testing.T) {
 		t.Errorf("put status code not expected. Extected %d!= real %d", http.StatusOK, code)
 	}
 
-	res, err := manager.Get(queueName).Get()
-	if err != nil {
-		t.Errorf("getting wrote data from queue. Got error: %s", err.Error())
-	}
+	ch := make(chan string)
+	manager.Get(queueName).AddWaiter(0, ch)
+	res := <-ch
 
 	if res != element {
 		t.Errorf("element in queue not expected: real '%s' != expected '%s'", res, element)
 	}
 }
 
+// TestGetFIFO проверяет что сообщения отдаются в порядке FIFO (первый пришел, последний ушел)
 func TestGetFIFO(t *testing.T) {
 	queueName := "test-queue"
 	manager := NewManager()
